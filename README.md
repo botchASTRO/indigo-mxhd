@@ -118,6 +118,20 @@ The project release version is `v0.1.0`.
 The INDIGO Control Panel may show the driver version as `2.0.0.1`.
 This corresponds to the internal INDIGO driver revision `DRIVER_VERSION 0x0001`.
 
+## Upstream PR Status
+
+This standalone repository contains the initial MX-HD INDIGO driver.
+For upstream submission to `indigo-astronomy/indigo`, the driver has also been refactored for the INDIGO 3.0 API on the `mount-mxhd-indigo3` branch of `botchASTRO/indigo`.
+
+The INDIGO 3.0 refactor addresses upstream review feedback:
+
+- added INDIGO-style copyright, disclaimer and author headers
+- replaced platform-specific serial I/O with INDIGO 3.0 `indigo_uni_*` I/O wrappers
+- replaced custom sexagesimal parsing/formatting with `indigo_stod()` and `indigo_dtos()`
+- moved device communication out of property handlers into scheduled callbacks
+- removed the required connection order between `MX-HD Mount` and `MX-HD Mount (guider)`
+- updated single-statement `if`/`else` blocks to use braces consistently
+
 ## License
 
 This project is licensed under the INDIGO Astronomy open-source license v3.0.

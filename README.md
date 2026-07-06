@@ -112,6 +112,12 @@ Still worth validating further on real hardware:
 - pulse-guide direction mapping against actual star motion
 - long-running guide pulses during simultaneous mount polling
 
+## Version Notes
+
+The project release version is `v0.1.0`.
+The INDIGO Control Panel may show the driver version as `2.0.0.1`.
+This corresponds to the internal INDIGO driver revision `DRIVER_VERSION 0x0001`.
+
 ## License
 
 This project is licensed under the INDIGO Astronomy open-source license v3.0.

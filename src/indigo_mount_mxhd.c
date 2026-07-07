@@ -357,6 +357,11 @@ static void position_timer_callback(indigo_device *device) {
 				MOUNT_TRACKING_PROPERTY->state = INDIGO_ALERT_STATE;
 				indigo_update_property(device, MOUNT_TRACKING_PROPERTY, "Home reached, tracking stop failed");
 			}
+		} else {
+			PRIVATE_DATA->tracking_enabled = true;
+			indigo_set_switch(MOUNT_TRACKING_PROPERTY, MOUNT_TRACKING_ON_ITEM, true);
+			MOUNT_TRACKING_PROPERTY->state = INDIGO_OK_STATE;
+			indigo_update_property(device, MOUNT_TRACKING_PROPERTY, "Unparked, tracking active");
 		}
 	}
 	bool moving = PRIVATE_DATA->slewing || PRIVATE_DATA->homing;

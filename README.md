@@ -72,6 +72,14 @@ Either device can be connected first; the first connected device opens the seria
 
 For early driver testing, operate `MX-HD Mount` directly. If an INDIGO Mount Agent tries to select `MX-HD Mount` while it is already connected directly, the agent can report that the device is busy or in use.
 
+## Behavior Notes
+
+On MX-HD hardware, a HOME operation normally resumes sidereal tracking after the home position is reached.
+For INDIGO HOME semantics, this driver stops the drive after HOME completion by sending `@FD0#`.
+
+UNPARK is implemented by moving the mount to the home position, but it is treated as an observing-ready state.
+Unlike HOME, the driver does not send `@FD0#` after UNPARK, so the MX-HD sidereal drive is allowed to start or remain active.
+
 ## Current Scope
 
 Implemented:

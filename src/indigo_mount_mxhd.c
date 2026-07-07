@@ -344,6 +344,15 @@ static void position_timer_callback(indigo_device *device) {
 		indigo_set_switch(MOUNT_PARK_PROPERTY, MOUNT_PARK_UNPARKED_ITEM, true);
 		MOUNT_PARK_PROPERTY->state = INDIGO_OK_STATE;
 		indigo_update_property(device, MOUNT_PARK_PROPERTY, "Unparked");
+		PRIVATE_DATA->tracking_enabled = false;
+		indigo_set_switch(MOUNT_TRACKING_PROPERTY, MOUNT_TRACKING_OFF_ITEM, true);
+		if (mxhd_send(device, "@FD0#")) {
+			MOUNT_TRACKING_PROPERTY->state = INDIGO_OK_STATE;
+			indigo_update_property(device, MOUNT_TRACKING_PROPERTY, "Home reached, tracking stopped");
+		} else {
+			MOUNT_TRACKING_PROPERTY->state = INDIGO_ALERT_STATE;
+			indigo_update_property(device, MOUNT_TRACKING_PROPERTY, "Home reached, tracking stop failed");
+		}
 	}
 	bool moving = PRIVATE_DATA->slewing || PRIVATE_DATA->homing;
 	if (PRIVATE_DATA->stop_tracking_after_slew && !moving) {

@@ -167,6 +167,18 @@ static bool mxhd_query_hash(indigo_device *device, const char *command, char *re
 	return result;
 }
 
+static void mxhd_update_mount_info(indigo_device *device) {
+	char response[128];
+	if (mxhd_query_hash(device, ":GVP#", response, sizeof(response), MXHD_IO_TIMEOUT_MS) && response[0] != 0) {
+		indigo_copy_value(MOUNT_INFO_MODEL_ITEM->text.value, response);
+	}
+	if (mxhd_query_hash(device, ":GVF#", response, sizeof(response), MXHD_IO_TIMEOUT_MS) && response[0] != 0) {
+		indigo_copy_value(MOUNT_INFO_FIRMWARE_ITEM->text.value, response);
+	}
+	MOUNT_INFO_PROPERTY->state = INDIGO_OK_STATE;
+	indigo_update_property(device, MOUNT_INFO_PROPERTY, NULL);
+}
+
 static bool mxhd_read_status(indigo_device *device, uint8_t *b1, uint8_t *b2, uint8_t *b3) {
 	pthread_mutex_lock(&PRIVATE_DATA->port_mutex);
 	bool result = false;
@@ -437,6 +449,7 @@ static void mount_connect_callback(indigo_device *device) {
 		if (result) {
 			PRIVATE_DATA->tracking_enabled = true;
 			CONNECTION_PROPERTY->state = INDIGO_OK_STATE;
+			mxhd_update_mount_info(device);
 			indigo_set_timer(device, 0, position_timer_callback, &PRIVATE_DATA->position_timer);
 			if (!MOUNT_UTC_TIME_PROPERTY->hidden) {
 				(void)mxhd_apply_utc(device);

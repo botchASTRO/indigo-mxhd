@@ -9,6 +9,7 @@ It uses the same mount protocol assumptions as the existing ASCOM and INDI drive
 
 - LX200-style commands: `:GR#`, `:GD#`, `:Sr#`, `:Sd#`, `:MS#`, `:CM#`
 - MX-HD status command: `@ST#`, returning 3 binary bytes
+- MX-HD product/firmware commands: `:GVP#`, `:GVF#`
 - MX-HD tracking commands: `@FD1#`, `@FD0#`, `@CE0#`, `@LP1#`, `@LP4#`
 - MX-HD home/park commands: `@OG#`, `@Hm#`
 - MX-HD pulse guide commands: `@mN#`, `@mS#`, `@mE#`, `@mW#`
@@ -66,6 +67,7 @@ The default serial port is `/dev/ttyUSB0` and the default baud rate is `9600`.
 USB serial connections typically appear as `/dev/ttyUSB0` or `/dev/ttyACM0`.
 Bluetooth serial connections are also supported when the OS exposes the MX-HD link as an RFCOMM serial device such as `/dev/rfcomm0`.
 Change the port and baud rate in the INDIGO client using `DEVICE_PORT` and `DEVICE_BAUDRATE`.
+On connection, the driver reads the mount product name with `:GVP#` and firmware version with `:GVF#` and reflects them in the mount information property when available.
 
 The `MX-HD Mount` and `MX-HD Mount (guider)` devices share one serial connection.
 Either device can be connected first; the first connected device opens the serial port and the last disconnected device closes it.

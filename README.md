@@ -2,6 +2,9 @@
 
 This is an initial INDIGO driver for the MX-HD equatorial mount.
 
+This standalone repository targets the INDIGO 2.0 package currently installed from the official INDIGO Astronomy apt repository.
+The upstream pull-request version for the INDIGO 3.0 API is maintained separately in `botchASTRO/indigo` on the `mount-mxhd-indigo3` branch.
+
 It uses the same mount protocol assumptions as the existing ASCOM and INDI drivers:
 
 - LX200-style commands: `:GR#`, `:GD#`, `:Sr#`, `:Sd#`, `:MS#`, `:CM#`

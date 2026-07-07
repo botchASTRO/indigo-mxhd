@@ -72,6 +72,12 @@ typedef struct {
 
 static bool set_tracking(indigo_device *device, bool enabled);
 
+static void update_tracking_property(indigo_device *device, const char *message) {
+	indigo_set_switch(MOUNT_TRACKING_PROPERTY, PRIVATE_DATA->tracking_enabled ? MOUNT_TRACKING_ON_ITEM : MOUNT_TRACKING_OFF_ITEM, true);
+	MOUNT_TRACKING_PROPERTY->state = INDIGO_OK_STATE;
+	indigo_update_property(device, MOUNT_TRACKING_PROPERTY, message);
+}
+
 static double clamp_dec(double value) {
 	if (value > 90) {
 		return 90;
@@ -447,8 +453,8 @@ static void mount_connect_callback(indigo_device *device) {
 			result = mxhd_open(device);
 		}
 		if (result) {
-			PRIVATE_DATA->tracking_enabled = true;
 			CONNECTION_PROPERTY->state = INDIGO_OK_STATE;
+			update_tracking_property(device, NULL);
 			mxhd_update_mount_info(device);
 			indigo_set_timer(device, 0, position_timer_callback, &PRIVATE_DATA->position_timer);
 			if (!MOUNT_UTC_TIME_PROPERTY->hidden) {
@@ -481,6 +487,7 @@ static indigo_result mount_attach(indigo_device *device) {
 		MOUNT_INFO_PROPERTY->hidden = false;
 		indigo_copy_value(MOUNT_INFO_VENDOR_ITEM->text.value, "GOTO Telescope");
 		indigo_copy_value(MOUNT_INFO_MODEL_ITEM->text.value, "MX-HD");
+		indigo_copy_value(MOUNT_INFO_FIRMWARE_ITEM->text.value, "Unknown");
 		MOUNT_UTC_TIME_PROPERTY->hidden = false;
 		MOUNT_SET_HOST_TIME_PROPERTY->hidden = false;
 		MOUNT_PARK_PROPERTY->hidden = false;
@@ -489,7 +496,7 @@ static indigo_result mount_attach(indigo_device *device) {
 		MOUNT_SIDE_OF_PIER_PROPERTY->perm = INDIGO_RO_PERM;
 		MOUNT_TRACK_RATE_PROPERTY->count = 3;
 		indigo_set_switch(MOUNT_TRACK_RATE_PROPERTY, MOUNT_TRACK_RATE_SIDEREAL_ITEM, true);
-		indigo_set_switch(MOUNT_TRACKING_PROPERTY, MOUNT_TRACKING_ON_ITEM, true);
+		indigo_set_switch(MOUNT_TRACKING_PROPERTY, MOUNT_TRACKING_OFF_ITEM, true);
 		indigo_set_switch(MOUNT_PARK_PROPERTY, MOUNT_PARK_UNPARKED_ITEM, true);
 		ADDITIONAL_INSTANCES_PROPERTY->hidden = DEVICE_CONTEXT->base_device != NULL;
 		INDIGO_DEVICE_ATTACH_LOG(DRIVER_NAME, device->name);
@@ -978,7 +985,7 @@ indigo_result indigo_mount_mxhd(indigo_driver_action action, indigo_driver_info 
 			last_action = action;
 			private_data = indigo_safe_malloc(sizeof(mxhd_private_data));
 			private_data->handle = -1;
-			private_data->tracking_enabled = true;
+			private_data->tracking_enabled = false;
 			pthread_mutex_init(&private_data->port_mutex, NULL);
 			mount = indigo_safe_malloc_copy(sizeof(indigo_device), &mount_template);
 			mount->private_data = private_data;

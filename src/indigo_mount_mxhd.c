@@ -554,13 +554,29 @@ static void mount_eq_coords_callback(indigo_device *device) {
 		indigo_update_coordinates(device, NULL);
 	} else {
 		char ack = 0;
-		if (mxhd_set_target(device, ra, dec) && mxhd_query_ack(device, ":MS#", &ack, MXHD_LONG_TIMEOUT_MS) && ack == '0') {
+		bool stop_after_slew = MOUNT_ON_COORDINATES_SET_SLEW_ITEM->sw.value;
+		bool was_tracking = PRIVATE_DATA->tracking_enabled;
+		bool target_set = mxhd_set_target(device, ra, dec);
+		bool tracking_started = target_set && set_tracking(device, true);
+		if (tracking_started) {
+			PRIVATE_DATA->tracking_enabled = true;
+			indigo_set_switch(MOUNT_TRACKING_PROPERTY, MOUNT_TRACKING_ON_ITEM, true);
+			MOUNT_TRACKING_PROPERTY->state = INDIGO_OK_STATE;
+			indigo_update_property(device, MOUNT_TRACKING_PROPERTY, "Tracking enabled before slew");
+		}
+		if (tracking_started && mxhd_query_ack(device, ":MS#", &ack, MXHD_LONG_TIMEOUT_MS) && ack == '0') {
 			PRIVATE_DATA->slewing = true;
-			PRIVATE_DATA->stop_tracking_after_slew = MOUNT_ON_COORDINATES_SET_SLEW_ITEM->sw.value;
+			PRIVATE_DATA->stop_tracking_after_slew = stop_after_slew;
 			MOUNT_EQUATORIAL_COORDINATES_PROPERTY->state = INDIGO_BUSY_STATE;
 			indigo_update_coordinates(device, "Slewing");
 		} else {
 			PRIVATE_DATA->stop_tracking_after_slew = false;
+			if (tracking_started && (stop_after_slew || !was_tracking)) {
+				PRIVATE_DATA->tracking_enabled = was_tracking;
+				indigo_set_switch(MOUNT_TRACKING_PROPERTY, was_tracking ? MOUNT_TRACKING_ON_ITEM : MOUNT_TRACKING_OFF_ITEM, true);
+				MOUNT_TRACKING_PROPERTY->state = set_tracking(device, was_tracking) ? INDIGO_OK_STATE : INDIGO_ALERT_STATE;
+				indigo_update_property(device, MOUNT_TRACKING_PROPERTY, "Slew failed, tracking restored");
+			}
 			MOUNT_EQUATORIAL_COORDINATES_PROPERTY->state = INDIGO_ALERT_STATE;
 			indigo_update_coordinates(device, "Slew failed");
 		}

@@ -484,6 +484,10 @@ static bool set_tracking(indigo_device *device, bool enabled) {
 	return mxhd_send(device, command);
 }
 
+static bool enable_motion_and_send(indigo_device *device, const char *command) {
+	return mxhd_send(device, "@ME1#") && mxhd_send(device, command);
+}
+
 static bool set_slew_rate(indigo_device *device) {
 	if (MOUNT_SLEW_RATE_GUIDE_ITEM->sw.value) {
 		return mxhd_send(device, ":RG#");
@@ -585,7 +589,7 @@ static void mount_eq_coords_callback(indigo_device *device) {
 
 static void mount_park_callback(indigo_device *device) {
 	if (MOUNT_PARK_PARKED_ITEM->sw.value) {
-		if (mxhd_send(device, "@Hm#")) {
+		if (enable_motion_and_send(device, "@Hm#")) {
 			PRIVATE_DATA->parking = true;
 			PRIVATE_DATA->parked = false;
 			MOUNT_PARK_PROPERTY->state = INDIGO_BUSY_STATE;
@@ -595,7 +599,7 @@ static void mount_park_callback(indigo_device *device) {
 			indigo_update_property(device, MOUNT_PARK_PROPERTY, "Park failed");
 		}
 	} else if (MOUNT_PARK_UNPARKED_ITEM->sw.value) {
-		if (mxhd_send(device, "@OG#")) {
+		if (enable_motion_and_send(device, "@OG#")) {
 			PRIVATE_DATA->going_home = true;
 			MOUNT_PARK_PROPERTY->state = INDIGO_BUSY_STATE;
 			indigo_update_property(device, MOUNT_PARK_PROPERTY, "Unparking via HOME");
@@ -609,7 +613,7 @@ static void mount_park_callback(indigo_device *device) {
 static void mount_home_callback(indigo_device *device) {
 	if (MOUNT_HOME_ITEM->sw.value) {
 		MOUNT_HOME_ITEM->sw.value = false;
-		if (mxhd_send(device, "@OG#")) {
+		if (enable_motion_and_send(device, "@OG#")) {
 			PRIVATE_DATA->going_home = true;
 			MOUNT_HOME_PROPERTY->state = INDIGO_BUSY_STATE;
 			indigo_update_property(device, MOUNT_HOME_PROPERTY, "Going home");

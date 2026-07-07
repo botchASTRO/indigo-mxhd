@@ -457,10 +457,6 @@ static void mount_connect_callback(indigo_device *device) {
 			update_tracking_property(device, NULL);
 			mxhd_update_mount_info(device);
 			indigo_set_timer(device, 0, position_timer_callback, &PRIVATE_DATA->position_timer);
-			if (!MOUNT_UTC_TIME_PROPERTY->hidden) {
-				(void)mxhd_apply_utc(device);
-			}
-			(void)mxhd_apply_site(device);
 		} else {
 			PRIVATE_DATA->connected_devices--;
 			CONNECTION_PROPERTY->state = INDIGO_ALERT_STATE;

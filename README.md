@@ -74,6 +74,16 @@ Either device can be connected first; the first connected device opens the seria
 
 For early driver testing, operate `MX-HD Mount` directly. If an INDIGO Mount Agent tries to select `MX-HD Mount` while it is already connected directly, the agent can report that the device is busy or in use.
 
+## Site and Time Setup
+
+The MX-HD mount needs valid time and observing-site settings for normal operation.
+This driver does not automatically send UTC/time or geographic coordinates on connection, because an INDIGO client may expose default or not-yet-initialized values during startup.
+
+Use the INDIGO client `Configuration Control` profile mechanism to save and load fixed settings such as the serial port, baud rate and observing-site latitude/longitude.
+After connecting, use `Set UTC` -> `From host` to copy the Raspberry Pi or host computer time into the INDIGO UTC/offset fields and send it to the mount.
+
+Changing `MOUNT_GEOGRAPHIC_COORDINATES` or `MOUNT_UTC_TIME` manually in the client still sends the updated values to the mount.
+
 ## Behavior Notes
 
 On MX-HD hardware, a HOME operation normally resumes sidereal tracking after the home position is reached.
@@ -92,7 +102,7 @@ Implemented:
 - serial connection
 - RA/Dec polling
 - goto and sync
-- site and UTC/time push
+- manual site and UTC/time push
 - park, unpark via HOME, and HOME
 - manual NSEW motion
 - sidereal/solar/lunar tracking rates

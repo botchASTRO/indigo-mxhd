@@ -309,7 +309,7 @@ static void update_pier_side(indigo_device *device, double ra) {
 	if (fabs(ha) < (1.0 / 60.0)) {
 		return;
 	}
-	indigo_set_switch(MOUNT_SIDE_OF_PIER_PROPERTY, ha > 0 ? MOUNT_SIDE_OF_PIER_EAST_ITEM : MOUNT_SIDE_OF_PIER_WEST_ITEM, true);
+	indigo_set_switch(MOUNT_SIDE_OF_PIER_PROPERTY, ha > 0 ? MOUNT_SIDE_OF_PIER_WEST_ITEM : MOUNT_SIDE_OF_PIER_EAST_ITEM, true);
 	MOUNT_SIDE_OF_PIER_PROPERTY->state = INDIGO_OK_STATE;
 	indigo_update_property(device, MOUNT_SIDE_OF_PIER_PROPERTY, NULL);
 }

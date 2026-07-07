@@ -15,7 +15,7 @@ It uses the same mount protocol assumptions as the existing ASCOM and INDI drive
 - `MX-HD Mount`: the main INDIGO mount device
 - `MX-HD Mount (guider)`: pulse-guide device using the mount's open serial connection
 
-Connect `MX-HD Mount` first. The guider device intentionally reuses the mount connection.
+The mount and guider devices share the same serial connection and can be connected in either order.
 
 ## Build
 
@@ -64,10 +64,8 @@ USB serial connections typically appear as `/dev/ttyUSB0` or `/dev/ttyACM0`.
 Bluetooth serial connections are also supported when the OS exposes the MX-HD link as an RFCOMM serial device such as `/dev/rfcomm0`.
 Change the port and baud rate in the INDIGO client using `DEVICE_PORT` and `DEVICE_BAUDRATE`.
 
-Connect order:
-
-1. Connect `MX-HD Mount` first. It opens the serial port.
-2. Connect `MX-HD Mount (guider)` second. It reuses the already-open mount serial connection.
+The `MX-HD Mount` and `MX-HD Mount (guider)` devices share one serial connection.
+Either device can be connected first; the first connected device opens the serial port and the last disconnected device closes it.
 
 For early driver testing, operate `MX-HD Mount` directly. If an INDIGO Mount Agent tries to select `MX-HD Mount` while it is already connected directly, the agent can report that the device is busy or in use.
 
@@ -122,6 +120,15 @@ This corresponds to the internal INDIGO driver revision `DRIVER_VERSION 0x0001`.
 
 This standalone repository contains the initial MX-HD INDIGO driver.
 For upstream submission to `indigo-astronomy/indigo`, the driver has also been refactored for the INDIGO 3.0 API on the `mount-mxhd-indigo3` branch of `botchASTRO/indigo`.
+
+The standalone INDIGO 2.0 driver also carries the review-driven cleanup where it can be applied without changing the target API:
+
+- added INDIGO-style copyright, disclaimer and author headers
+- replaced platform-specific serial read/write loops with INDIGO `indigo_read()` and `indigo_write()` wrappers
+- replaced custom sexagesimal parsing/formatting with `indigo_stod()` and `indigo_dtos()`
+- moved device communication out of property handlers into scheduled callbacks
+- removed the required connection order between `MX-HD Mount` and `MX-HD Mount (guider)`
+- updated single-statement `if`/`else` blocks to use braces consistently
 
 The INDIGO 3.0 refactor addresses upstream review feedback:
 

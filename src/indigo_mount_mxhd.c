@@ -63,10 +63,13 @@ typedef struct {
 	bool going_home;
 	bool homing;
 	bool slewing;
+	bool stop_tracking_after_slew;
 	double latitude;
 	double longitude;
 	bool has_site;
 } mxhd_private_data;
+
+static bool set_tracking(indigo_device *device, bool enabled);
 
 static double clamp_dec(double value) {
 	if (value > 90) {
@@ -343,6 +346,18 @@ static void position_timer_callback(indigo_device *device) {
 		indigo_update_property(device, MOUNT_PARK_PROPERTY, "Unparked");
 	}
 	bool moving = PRIVATE_DATA->slewing || PRIVATE_DATA->homing;
+	if (PRIVATE_DATA->stop_tracking_after_slew && !moving) {
+		PRIVATE_DATA->stop_tracking_after_slew = false;
+		PRIVATE_DATA->tracking_enabled = false;
+		indigo_set_switch(MOUNT_TRACKING_PROPERTY, MOUNT_TRACKING_OFF_ITEM, true);
+		if (set_tracking(device, false)) {
+			MOUNT_TRACKING_PROPERTY->state = INDIGO_OK_STATE;
+			indigo_update_property(device, MOUNT_TRACKING_PROPERTY, "Slew complete, tracking stopped");
+		} else {
+			MOUNT_TRACKING_PROPERTY->state = INDIGO_ALERT_STATE;
+			indigo_update_property(device, MOUNT_TRACKING_PROPERTY, "Slew complete, tracking stop failed");
+		}
+	}
 	double ra = 0, dec = 0;
 	if (mxhd_query_radec(device, &ra, &dec)) {
 		MOUNT_RAW_COORDINATES_RA_ITEM->number.value = MOUNT_RAW_COORDINATES_RA_ITEM->number.target = ra;
@@ -527,6 +542,7 @@ static void mount_eq_coords_callback(indigo_device *device) {
 	double ra = MOUNT_EQUATORIAL_COORDINATES_RA_ITEM->number.target;
 	double dec = MOUNT_EQUATORIAL_COORDINATES_DEC_ITEM->number.target;
 	if (MOUNT_ON_COORDINATES_SET_SYNC_ITEM->sw.value) {
+		PRIVATE_DATA->stop_tracking_after_slew = false;
 		char response[128];
 		if (mxhd_set_target(device, ra, dec) && mxhd_query_hash(device, ":CM#", response, sizeof(response), MXHD_LONG_TIMEOUT_MS)) {
 			MOUNT_EQUATORIAL_COORDINATES_PROPERTY->state = INDIGO_OK_STATE;
@@ -540,9 +556,11 @@ static void mount_eq_coords_callback(indigo_device *device) {
 		char ack = 0;
 		if (mxhd_set_target(device, ra, dec) && mxhd_query_ack(device, ":MS#", &ack, MXHD_LONG_TIMEOUT_MS) && ack == '0') {
 			PRIVATE_DATA->slewing = true;
+			PRIVATE_DATA->stop_tracking_after_slew = MOUNT_ON_COORDINATES_SET_SLEW_ITEM->sw.value;
 			MOUNT_EQUATORIAL_COORDINATES_PROPERTY->state = INDIGO_BUSY_STATE;
 			indigo_update_coordinates(device, "Slewing");
 		} else {
+			PRIVATE_DATA->stop_tracking_after_slew = false;
 			MOUNT_EQUATORIAL_COORDINATES_PROPERTY->state = INDIGO_ALERT_STATE;
 			indigo_update_coordinates(device, "Slew failed");
 		}
@@ -622,6 +640,7 @@ static void mount_motion_ra_callback(indigo_device *device) {
 
 static void mount_abort_callback(indigo_device *device) {
 	if (MOUNT_ABORT_MOTION_ITEM->sw.value) {
+		PRIVATE_DATA->stop_tracking_after_slew = false;
 		bool ok = PRIVATE_DATA->homing ? mxhd_send(device, "@ME0#") : mxhd_send(device, ":Q#");
 		MOUNT_ABORT_MOTION_ITEM->sw.value = false;
 		MOUNT_ABORT_MOTION_PROPERTY->state = ok ? INDIGO_OK_STATE : INDIGO_ALERT_STATE;

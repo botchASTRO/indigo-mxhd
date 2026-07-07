@@ -61,6 +61,7 @@ typedef struct {
 	bool parked;
 	bool parking;
 	bool going_home;
+	bool stop_drive_after_home;
 	bool homing;
 	bool slewing;
 	bool stop_tracking_after_slew;
@@ -337,21 +338,25 @@ static void position_timer_callback(indigo_device *device) {
 		indigo_update_property(device, MOUNT_PARK_PROPERTY, "Parked");
 	}
 	if (PRIVATE_DATA->going_home && !PRIVATE_DATA->slewing && !PRIVATE_DATA->homing) {
+		bool stop_drive_after_home = PRIVATE_DATA->stop_drive_after_home;
 		PRIVATE_DATA->going_home = false;
+		PRIVATE_DATA->stop_drive_after_home = false;
 		PRIVATE_DATA->parked = false;
 		MOUNT_HOME_PROPERTY->state = INDIGO_OK_STATE;
 		indigo_update_property(device, MOUNT_HOME_PROPERTY, "Home reached");
 		indigo_set_switch(MOUNT_PARK_PROPERTY, MOUNT_PARK_UNPARKED_ITEM, true);
 		MOUNT_PARK_PROPERTY->state = INDIGO_OK_STATE;
 		indigo_update_property(device, MOUNT_PARK_PROPERTY, "Unparked");
-		PRIVATE_DATA->tracking_enabled = false;
-		indigo_set_switch(MOUNT_TRACKING_PROPERTY, MOUNT_TRACKING_OFF_ITEM, true);
-		if (mxhd_send(device, "@FD0#")) {
-			MOUNT_TRACKING_PROPERTY->state = INDIGO_OK_STATE;
-			indigo_update_property(device, MOUNT_TRACKING_PROPERTY, "Home reached, tracking stopped");
-		} else {
-			MOUNT_TRACKING_PROPERTY->state = INDIGO_ALERT_STATE;
-			indigo_update_property(device, MOUNT_TRACKING_PROPERTY, "Home reached, tracking stop failed");
+		if (stop_drive_after_home) {
+			PRIVATE_DATA->tracking_enabled = false;
+			indigo_set_switch(MOUNT_TRACKING_PROPERTY, MOUNT_TRACKING_OFF_ITEM, true);
+			if (mxhd_send(device, "@FD0#")) {
+				MOUNT_TRACKING_PROPERTY->state = INDIGO_OK_STATE;
+				indigo_update_property(device, MOUNT_TRACKING_PROPERTY, "Home reached, tracking stopped");
+			} else {
+				MOUNT_TRACKING_PROPERTY->state = INDIGO_ALERT_STATE;
+				indigo_update_property(device, MOUNT_TRACKING_PROPERTY, "Home reached, tracking stop failed");
+			}
 		}
 	}
 	bool moving = PRIVATE_DATA->slewing || PRIVATE_DATA->homing;
@@ -610,6 +615,7 @@ static void mount_park_callback(indigo_device *device) {
 	} else if (MOUNT_PARK_UNPARKED_ITEM->sw.value) {
 		if (enable_motion_and_send(device, "@OG#")) {
 			PRIVATE_DATA->going_home = true;
+			PRIVATE_DATA->stop_drive_after_home = false;
 			MOUNT_PARK_PROPERTY->state = INDIGO_BUSY_STATE;
 			indigo_update_property(device, MOUNT_PARK_PROPERTY, "Unparking via HOME");
 		} else {
@@ -624,6 +630,7 @@ static void mount_home_callback(indigo_device *device) {
 		MOUNT_HOME_ITEM->sw.value = false;
 		if (enable_motion_and_send(device, "@OG#")) {
 			PRIVATE_DATA->going_home = true;
+			PRIVATE_DATA->stop_drive_after_home = true;
 			MOUNT_HOME_PROPERTY->state = INDIGO_BUSY_STATE;
 			indigo_update_property(device, MOUNT_HOME_PROPERTY, "Going home");
 		} else {
@@ -670,6 +677,7 @@ static void mount_motion_ra_callback(indigo_device *device) {
 static void mount_abort_callback(indigo_device *device) {
 	if (MOUNT_ABORT_MOTION_ITEM->sw.value) {
 		PRIVATE_DATA->stop_tracking_after_slew = false;
+		PRIVATE_DATA->stop_drive_after_home = false;
 		bool ok = PRIVATE_DATA->homing ? mxhd_send(device, "@ME0#") : mxhd_send(device, ":Q#");
 		MOUNT_ABORT_MOTION_ITEM->sw.value = false;
 		MOUNT_ABORT_MOTION_PROPERTY->state = ok ? INDIGO_OK_STATE : INDIGO_ALERT_STATE;

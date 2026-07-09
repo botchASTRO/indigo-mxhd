@@ -93,47 +93,12 @@ static bool switch_item_selected(indigo_property *property, const char *name) {
 	return false;
 }
 
-static void clear_rejected_motion_dec(indigo_device *device) {
-	indigo_set_switch(MOUNT_MOTION_DEC_PROPERTY, NULL, false);
-	MOUNT_MOTION_DEC_PROPERTY->state = INDIGO_OK_STATE;
-	indigo_update_property(device, MOUNT_MOTION_DEC_PROPERTY, NULL);
-}
-
-static void clear_rejected_motion_ra(indigo_device *device) {
-	indigo_set_switch(MOUNT_MOTION_RA_PROPERTY, NULL, false);
-	MOUNT_MOTION_RA_PROPERTY->state = INDIGO_OK_STATE;
-	indigo_update_property(device, MOUNT_MOTION_RA_PROPERTY, NULL);
-}
-
-static void clear_rejected_guide_ra(indigo_device *device) {
-	GUIDER_GUIDE_EAST_ITEM->number.value = 0;
-	GUIDER_GUIDE_WEST_ITEM->number.value = 0;
-	GUIDER_GUIDE_RA_PROPERTY->state = INDIGO_OK_STATE;
-	indigo_update_property(device, GUIDER_GUIDE_RA_PROPERTY, NULL);
-}
-
-static void clear_rejected_guide_dec(indigo_device *device) {
-	GUIDER_GUIDE_NORTH_ITEM->number.value = 0;
-	GUIDER_GUIDE_SOUTH_ITEM->number.value = 0;
-	GUIDER_GUIDE_DEC_PROPERTY->state = INDIGO_OK_STATE;
-	indigo_update_property(device, GUIDER_GUIDE_DEC_PROPERTY, NULL);
-}
-
 static void reject_if_parked(indigo_device *device, indigo_property *property) {
 	property->state = INDIGO_ALERT_STATE;
 	if (!strcmp(property->name, MOUNT_EQUATORIAL_COORDINATES_PROPERTY_NAME)) {
 		indigo_update_coordinates(device, "Mount is parked!");
 	} else {
 		indigo_update_property(device, property, "Mount is parked!");
-	}
-	if (!strcmp(property->name, MOUNT_MOTION_DEC_PROPERTY_NAME)) {
-		indigo_set_timer(device, 1.0, clear_rejected_motion_dec, NULL);
-	} else if (!strcmp(property->name, MOUNT_MOTION_RA_PROPERTY_NAME)) {
-		indigo_set_timer(device, 1.0, clear_rejected_motion_ra, NULL);
-	} else if (!strcmp(property->name, GUIDER_GUIDE_RA_PROPERTY_NAME)) {
-		indigo_set_timer(device, 1.0, clear_rejected_guide_ra, NULL);
-	} else if (!strcmp(property->name, GUIDER_GUIDE_DEC_PROPERTY_NAME)) {
-		indigo_set_timer(device, 1.0, clear_rejected_guide_dec, NULL);
 	}
 }
 

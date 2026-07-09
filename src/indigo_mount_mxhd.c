@@ -78,6 +78,12 @@ static void update_tracking_property(indigo_device *device, const char *message)
 	indigo_update_property(device, MOUNT_TRACKING_PROPERTY, message);
 }
 
+static void update_track_rate_to_sidereal(indigo_device *device, const char *message) {
+	indigo_set_switch(MOUNT_TRACK_RATE_PROPERTY, MOUNT_TRACK_RATE_SIDEREAL_ITEM, true);
+	MOUNT_TRACK_RATE_PROPERTY->state = INDIGO_OK_STATE;
+	indigo_update_property(device, MOUNT_TRACK_RATE_PROPERTY, message);
+}
+
 static double clamp_dec(double value) {
 	if (value > 90) {
 		return 90;
@@ -354,6 +360,10 @@ static void position_timer_callback(indigo_device *device) {
 		indigo_set_switch(MOUNT_PARK_PROPERTY, MOUNT_PARK_PARKED_ITEM, true);
 		MOUNT_PARK_PROPERTY->state = INDIGO_OK_STATE;
 		indigo_update_property(device, MOUNT_PARK_PROPERTY, "Parked");
+		PRIVATE_DATA->tracking_enabled = false;
+		indigo_set_switch(MOUNT_TRACKING_PROPERTY, MOUNT_TRACKING_OFF_ITEM, true);
+		MOUNT_TRACKING_PROPERTY->state = INDIGO_OK_STATE;
+		indigo_update_property(device, MOUNT_TRACKING_PROPERTY, "Parked, tracking stopped");
 	}
 	if (PRIVATE_DATA->going_home && !PRIVATE_DATA->slewing && !PRIVATE_DATA->homing) {
 		bool stop_drive_after_home = PRIVATE_DATA->stop_drive_after_home;
@@ -365,6 +375,7 @@ static void position_timer_callback(indigo_device *device) {
 		indigo_set_switch(MOUNT_PARK_PROPERTY, MOUNT_PARK_UNPARKED_ITEM, true);
 		MOUNT_PARK_PROPERTY->state = INDIGO_OK_STATE;
 		indigo_update_property(device, MOUNT_PARK_PROPERTY, "Unparked");
+		update_track_rate_to_sidereal(device, "Home operation selected sidereal rate");
 		if (stop_drive_after_home) {
 			PRIVATE_DATA->tracking_enabled = false;
 			indigo_set_switch(MOUNT_TRACKING_PROPERTY, MOUNT_TRACKING_OFF_ITEM, true);
@@ -606,6 +617,7 @@ static void mount_eq_coords_callback(indigo_device *device) {
 		if (tracking_started && mxhd_query_ack(device, ":MS#", &ack, MXHD_LONG_TIMEOUT_MS) && ack == '0') {
 			PRIVATE_DATA->slewing = true;
 			PRIVATE_DATA->stop_tracking_after_slew = stop_after_slew;
+			update_track_rate_to_sidereal(device, "Slew selected sidereal rate");
 			MOUNT_EQUATORIAL_COORDINATES_PROPERTY->state = INDIGO_BUSY_STATE;
 			indigo_update_coordinates(device, "Slewing");
 		} else {

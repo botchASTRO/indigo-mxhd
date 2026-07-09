@@ -498,7 +498,7 @@ static void mount_connect_callback(indigo_device *device) {
 		}
 		CONNECTION_PROPERTY->state = INDIGO_OK_STATE;
 	}
-	indigo_update_property(device, CONNECTION_PROPERTY, NULL);
+	indigo_mount_change_property(device, NULL, CONNECTION_PROPERTY);
 }
 
 static indigo_result mount_attach(indigo_device *device) {
@@ -956,6 +956,9 @@ static indigo_result guider_attach(indigo_device *device) {
 	assert(device != NULL);
 	assert(PRIVATE_DATA != NULL);
 	if (indigo_guider_attach(device, DRIVER_NAME, DRIVER_VERSION) == INDIGO_OK) {
+		CONFIG_PROPERTY->hidden = true;
+		PROFILE_NAME_PROPERTY->hidden = true;
+		PROFILE_PROPERTY->hidden = true;
 		GUIDER_RATE_PROPERTY->hidden = false;
 		GUIDER_RATE_PROPERTY->count = 2;
 		INDIGO_DEVICE_ATTACH_LOG(DRIVER_NAME, device->name);
@@ -985,7 +988,7 @@ static void guider_connect_callback(indigo_device *device) {
 		}
 		CONNECTION_PROPERTY->state = INDIGO_OK_STATE;
 	}
-	indigo_update_property(device, CONNECTION_PROPERTY, NULL);
+	indigo_guider_change_property(device, NULL, CONNECTION_PROPERTY);
 }
 
 static indigo_result guider_change_property(indigo_device *device, indigo_client *client, indigo_property *property) {

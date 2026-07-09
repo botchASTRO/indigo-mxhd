@@ -71,6 +71,7 @@ On connection, the driver reads the mount product name with `:GVP#` and firmware
 
 The `MX-HD Mount` and `MX-HD Mount (guider)` devices share one serial connection.
 Either device can be connected first; the first connected device opens the serial port and the last disconnected device closes it.
+Configuration and profile controls are intentionally hidden on `MX-HD Mount (guider)`, because the serial port, baud rate, site and time settings are shared with and configured through `MX-HD Mount`.
 
 For early driver testing, operate `MX-HD Mount` directly. If an INDIGO Mount Agent tries to select `MX-HD Mount` while it is already connected directly, the agent can report that the device is busy or in use.
 
@@ -112,6 +113,8 @@ Implemented:
 - tracking on/off
 - simple abort
 - pulse guide via the separate guider device
+- shared serial connection from either mount or guider connection
+- hidden guider-side configuration/profile controls
 - HA-derived side of pier
 
 ## Real Hardware Status

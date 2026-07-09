@@ -109,6 +109,9 @@ static void reset_motion_properties(indigo_device *device) {
 	indigo_set_switch(MOUNT_MOTION_RA_PROPERTY, NULL, false);
 	MOUNT_MOTION_RA_PROPERTY->state = INDIGO_OK_STATE;
 	indigo_update_property(device, MOUNT_MOTION_RA_PROPERTY, NULL);
+}
+
+static void reset_guider_properties(indigo_device *device) {
 	GUIDER_GUIDE_EAST_ITEM->number.value = 0;
 	GUIDER_GUIDE_WEST_ITEM->number.value = 0;
 	GUIDER_GUIDE_RA_PROPERTY->state = INDIGO_OK_STATE;
@@ -411,6 +414,9 @@ static void position_timer_callback(indigo_device *device) {
 		MOUNT_PARK_PROPERTY->state = INDIGO_OK_STATE;
 		indigo_update_property(device, MOUNT_PARK_PROPERTY, "Unparked");
 		reset_motion_properties(device);
+		if (guider != NULL) {
+			reset_guider_properties(guider);
+		}
 		update_track_rate_to_sidereal(device, "Home operation selected sidereal rate");
 		if (stop_drive_after_home) {
 			PRIVATE_DATA->tracking_enabled = false;

@@ -709,15 +709,31 @@ static void mount_motion_ra_callback(indigo_device *device) {
 
 static void mount_abort_callback(indigo_device *device) {
 	if (MOUNT_ABORT_MOTION_ITEM->sw.value) {
+		bool stop_tracking_after_slew = PRIVATE_DATA->stop_tracking_after_slew;
 		PRIVATE_DATA->stop_tracking_after_slew = false;
 		PRIVATE_DATA->stop_drive_after_home = false;
 		bool ok = PRIVATE_DATA->homing ? mxhd_send(device, "@ME0#") : mxhd_send(device, ":Q#");
+		const char *message = ok ? "Aborted" : "Abort failed";
 		MOUNT_ABORT_MOTION_ITEM->sw.value = false;
 		MOUNT_ABORT_MOTION_PROPERTY->state = ok ? INDIGO_OK_STATE : INDIGO_ALERT_STATE;
 		if (ok) {
 			MOUNT_EQUATORIAL_COORDINATES_PROPERTY->state = INDIGO_ALERT_STATE;
+			if (stop_tracking_after_slew) {
+				PRIVATE_DATA->tracking_enabled = false;
+				indigo_set_switch(MOUNT_TRACKING_PROPERTY, MOUNT_TRACKING_OFF_ITEM, true);
+				if (mxhd_send(device, "@FD0#")) {
+					MOUNT_TRACKING_PROPERTY->state = INDIGO_OK_STATE;
+					indigo_update_property(device, MOUNT_TRACKING_PROPERTY, "Aborted, tracking stopped");
+					message = "Aborted, tracking stopped";
+				} else {
+					MOUNT_TRACKING_PROPERTY->state = INDIGO_ALERT_STATE;
+					indigo_update_property(device, MOUNT_TRACKING_PROPERTY, "Abort succeeded, tracking stop failed");
+					MOUNT_ABORT_MOTION_PROPERTY->state = INDIGO_ALERT_STATE;
+					message = "Abort succeeded, tracking stop failed";
+				}
+			}
 		}
-		indigo_update_property(device, MOUNT_ABORT_MOTION_PROPERTY, ok ? "Aborted" : "Abort failed");
+		indigo_update_property(device, MOUNT_ABORT_MOTION_PROPERTY, message);
 		indigo_update_coordinates(device, NULL);
 	}
 }
